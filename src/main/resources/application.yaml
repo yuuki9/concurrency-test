@@ -3,18 +3,18 @@ spring:
     name: concurrency-test
   
   datasource:
-    url: jdbc:mysql://localhost:3306/coupon_test?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: root
+    url: jdbc:mysql://192.168.204.101:3306/app
+    username: yuuki
+    password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
   
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: none
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.MySQLDialect
     open-in-view: false
 

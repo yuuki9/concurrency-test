@@ -35,9 +35,8 @@ public class CouponServiceSync {
      * 1. JVM 레벨의 락이므로 단일 인스턴스에서만 작동
      * 2. @Transactional과 함께 사용 시, 트랜잭션 커밋 전에 락이 해제됨
      */
-    @Transactional
+    //@Transactional
     public synchronized CouponIssueResponse issueCoupon(Long couponId, Long userId) {
-        log.info("[Synchronized] 쿠폰 발급 시작 - couponId: {}, userId: {}", couponId, userId);
 
         // 1. 쿠폰 조회
         Coupon coupon = couponRepository.findById(couponId)
@@ -45,13 +44,12 @@ public class CouponServiceSync {
 
         // 2. 이미 발급받은 사용자인지 확인
         if (couponIssueRepository.existsByCouponIdAndUserId(couponId, userId)) {
-            log.warn("[Synchronized] 이미 발급받은 사용자 - couponId: {}, userId: {}", couponId, userId);
             return CouponIssueResponse.fail("이미 발급받은 쿠폰입니다.");
         }
 
         // 3. 쿠폰 발급 가능 여부 확인 및 발급
         if (!coupon.canIssue()) {
-            log.warn("[Synchronized] 쿠폰 재고 부족 - couponId: {}, userId: {}", couponId, userId);
+            log.warn("쿠폰 재고 부족 - couponId: {}, userId: {}", couponId, userId);
             return CouponIssueResponse.fail("쿠폰이 모두 발급되었습니다.");
         }
 
