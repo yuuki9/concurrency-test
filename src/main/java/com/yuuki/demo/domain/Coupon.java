@@ -27,7 +27,7 @@ public class Coupon {
     @Column(nullable = false)
     private Integer issuedQuantity;
 
-    @Version  // 낙관적 락을 위한 버전 필드
+    @Version  // 낙관적 락을 위한 버전
     private Long version;
 
     @Column(nullable = false, updatable = false)

@@ -22,7 +22,6 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     Optional<Coupon> findByIdWithPessimisticLock(@Param("id") Long id);
 
     /**
-     * 낙관적 락 - @Version 사용
      * 별도 어노테이션 없이도 @Version 필드가 있으면 자동으로 낙관적 락 적용
      */
     @Lock(LockModeType.OPTIMISTIC)

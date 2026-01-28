@@ -49,7 +49,6 @@ public class CouponServiceOptimistic {
      */
     @Transactional
     public CouponIssueResponse issueCoupon(Long couponId, Long userId) {
-        log.info("[OptimisticLock] 쿠폰 발급 시도 - couponId: {}, userId: {}", couponId, userId);
 
         try {
             // 1. 낙관적 락으로 쿠폰 조회
@@ -58,13 +57,11 @@ public class CouponServiceOptimistic {
 
             // 2. 이미 발급받은 사용자인지 확인
             if (couponIssueRepository.existsByCouponIdAndUserId(couponId, userId)) {
-                log.warn("[OptimisticLock] 이미 발급받은 사용자 - couponId: {}, userId: {}", couponId, userId);
                 return CouponIssueResponse.fail("이미 발급받은 쿠폰입니다.");
             }
 
             // 3. 쿠폰 발급 가능 여부 확인 및 발급
             if (!coupon.canIssue()) {
-                log.warn("[OptimisticLock] 쿠폰 재고 부족 - couponId: {}, userId: {}", couponId, userId);
                 return CouponIssueResponse.fail("쿠폰이 모두 발급되었습니다.");
             }
 
@@ -77,13 +74,9 @@ public class CouponServiceOptimistic {
                     .build();
             couponIssueRepository.save(couponIssue);
 
-            log.info("[OptimisticLock] 쿠폰 발급 성공 - couponId: {}, userId: {}, issueId: {}", 
-                    couponId, userId, couponIssue.getId());
-
             return CouponIssueResponse.success(couponIssue.getId(), coupon.getRemainingQuantity());
 
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("[OptimisticLock] 낙관적 락 충돌 - couponId: {}, userId: {}", couponId, userId);
             throw e; // 재시도는 호출하는 쪽에서 처리
         }
     }
@@ -101,11 +94,7 @@ public class CouponServiceOptimistic {
                 return issueCoupon(couponId, userId);
             } catch (ObjectOptimisticLockingFailureException e) {
                 retryCount++;
-                log.warn("[OptimisticLock] 재시도 {}/{} - couponId: {}, userId: {}", 
-                        retryCount, MAX_RETRIES, couponId, userId);
-                
                 if (retryCount >= MAX_RETRIES) {
-                    log.error("[OptimisticLock] 최대 재시도 횟수 초과 - couponId: {}, userId: {}", couponId, userId);
                     return CouponIssueResponse.fail("쿠폰 발급에 실패했습니다. 다시 시도해주세요.");
                 }
 
