@@ -38,13 +38,11 @@ public class CouponServicePessimistic {
 
     /**
      * 비관적 락을 사용한 쿠폰 발급
-     * 
-     * SELECT ... FOR UPDATE를 사용하여 row-level lock
+     * SELECT ... FOR UPDATE를 사용
      * 트랜잭션이 끝날 때까지 다른 트랜잭션은 대기
      */
     @Transactional
     public CouponIssueResponse issueCoupon(Long couponId, Long userId) {
-        log.info("[PessimisticLock] 쿠폰 발급 시작 - couponId: {}, userId: {}", couponId, userId);
 
         // 1. 비관적 락으로 쿠폰 조회
         Coupon coupon = couponRepository.findByIdWithPessimisticLock(couponId)
@@ -52,13 +50,11 @@ public class CouponServicePessimistic {
 
         // 2. 이미 발급받은 사용자인지 확인
         if (couponIssueRepository.existsByCouponIdAndUserId(couponId, userId)) {
-            log.warn("[PessimisticLock] 이미 발급받은 사용자 - couponId: {}, userId: {}", couponId, userId);
             return CouponIssueResponse.fail("이미 발급받은 쿠폰입니다.");
         }
 
         // 3. 쿠폰 발급 가능 여부 확인 및 발급
         if (!coupon.canIssue()) {
-            log.warn("[PessimisticLock] 쿠폰 재고 부족 - couponId: {}, userId: {}", couponId, userId);
             return CouponIssueResponse.fail("쿠폰이 모두 발급되었습니다.");
         }
 
@@ -70,9 +66,6 @@ public class CouponServicePessimistic {
                 .userId(userId)
                 .build();
         couponIssueRepository.save(couponIssue);
-
-        log.info("[PessimisticLock] 쿠폰 발급 성공 - couponId: {}, userId: {}, issueId: {}", 
-                couponId, userId, couponIssue.getId());
 
         return CouponIssueResponse.success(couponIssue.getId(), coupon.getRemainingQuantity());
     }

@@ -14,6 +14,7 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     /**
      * 비관적 락 - 배타적 락 (Pessimistic Write Lock)
      * 다른 트랜잭션에서 읽기/쓰기 불가
+     * Lock 어노테이션을 이용해서 구현
      */
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

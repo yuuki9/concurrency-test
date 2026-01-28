@@ -103,7 +103,60 @@ class CouponConcurrencyTest {
         assertThat(couponIssueRepository.count()).isEqualTo(100);
 
     }
+
+
+    //Pessimistic Lock 실제로 데이터에 Lock를 걸어서 정합성을 맞추는 역할
+    @Test
+    @DisplayName("쿠폰 동시에 100개 비관적락 적용")
+    void 쿠폰발급_동시에_100개_비관적락() throws InterruptedException {
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            long userId = i;
+            executorService.execute(() -> {
+                try {
+                    CouponIssueResponse response = couponServicePessimistic.issueCoupon(testCoupon.getId(), userId);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
+        }
+
+        // 모든 스레드가 완료될 때까지 대기
+        countDownLatch.await();
+        executorService.shutdown();
+
+        Coupon fresh =
+                couponRepository.findById(testCoupon.getId()).orElseThrow();
+        log.info("남은 쿠폰 양 >>>> {}", fresh.getRemainingQuantity());
+        log.info("발급된 쿠폰 양 >>>> {}", fresh.getIssuedQuantity());
+        log.info("DB에 저장된 발급 이력 수 >>>> {}", couponIssueRepository.count());
+
+        // 검증
+        assertThat(fresh.getIssuedQuantity()).isEqualTo(100);
+        assertThat(fresh.getRemainingQuantity()).isEqualTo(0);
+        assertThat(couponIssueRepository.count()).isEqualTo(100);
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //Optimistic Lock Lock을 이용하지 않고 버전을 이용함으로써
 }
+
 
 //    @Test
 //    @DisplayName("Synchronized 1000명이 동시에 100개 쿠폰 발급 요청 (동시성 제어 실패 예상)")
