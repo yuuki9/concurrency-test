@@ -177,6 +177,8 @@ class CouponConcurrencyTest {
         assertThat(couponIssueRepository.count()).isEqualTo(100);
 
     }
+
+    //NamedLock에 대한 테스트 코드
 }
 
 

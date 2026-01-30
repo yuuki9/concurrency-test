@@ -6,37 +6,18 @@ import com.yuuki.demo.dto.CouponIssueResponse;
 import com.yuuki.demo.repository.CouponIssueRepository;
 import com.yuuki.demo.repository.CouponRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Synchronized를 사용한 동시성 제어
- * 
- * 문제점:
- * - 단일 서버 환경에서만 작동
- * - 멀티 스레드 환경에서는 동작하나, 멀티 인스턴스(분산 환경)에서는 동작하지 않음
- * - 트랜잭션이 메서드 종료 후 커밋되므로, synchronized 블록을 벗어난 후 실제 DB 반영까지 시간차 발생
- * 
- * 이 버전은 동시성 제어 실패 케이스를 확인하기 위한 용도
- */
-@Slf4j
 @Service
 @RequiredArgsConstructor
-public class CouponServiceSync {
-
+public class CouponService {
     private final CouponRepository couponRepository;
     private final CouponIssueRepository couponIssueRepository;
 
-    /**
-     * synchronized 키워드를 사용한 동시성 제어 (실패 케이스)
-     * 
-     * 문제점:
-     * 1. JVM 레벨의 락이므로 단일 인스턴스에서만 작동
-     * 2. @Transactional과 함께 사용 시, 트랜잭션 커밋 전에 락이 해제됨
-     */
-    //@Transactional
-    public synchronized CouponIssueResponse issueCoupon(Long couponId, Long userId) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public CouponIssueResponse issueCoupon(Long couponId, Long userId) {
 
         // 1. 쿠폰 조회
         Coupon coupon = couponRepository.findById(couponId)
@@ -62,12 +43,8 @@ public class CouponServiceSync {
                 .build();
         couponIssueRepository.save(couponIssue);
 
+
         return CouponIssueResponse.success(couponIssue.getId(), coupon.getRemainingQuantity());
     }
 
-    @Transactional(readOnly = true)
-    public Coupon getCoupon(Long couponId) {
-        return couponRepository.findById(couponId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 쿠폰입니다."));
-    }
 }
